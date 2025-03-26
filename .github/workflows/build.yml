@@ -1,0 +1,46 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - 'master'
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@7f352e61cbe8130c957c3bc898c4fb025784ea1e
+        with:
+          xcode-version: latest-stable
+
+      - name: Prepare
+        run: |
+          if [[ -d "$RUNNER_TEMP" ]]; then
+            export TMPDIR="$RUNNER_TEMP"
+          fi
+          tmpdir=$(mktemp -d)
+          tuist_version=$(cat .tuist-version)
+          if [[ -z "$tuist_version" ]]; then
+            echo "Failed to get tuist version"
+            exit 1
+          fi
+          pushd "$tmpdir"
+          curl -OL https://github.com/tuist/tuist/releases/download/$tuist_version/tuist.zip
+          unzip tuist.zip
+          popd
+          "$tmpdir/tuist" install
+          "$tmpdir/tuist" generate --no-open
+          rm -rf "$tmpdir"
+
+      - name: Build
+        run: |
+          rm -rf DerivedData
+          xcodebuild -workspace HelloWorld.xcworkspace -scheme HelloWorld-Workspace -sdk iphonesimulator -configuration Debug -derivedDataPath DerivedData

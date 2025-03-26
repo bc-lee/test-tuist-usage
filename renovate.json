@@ -1,0 +1,22 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "rebaseWhen": "never",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [
+        ".tuist-version$"
+      ],
+      "matchStrings": [
+        "(?<currentValue>.*?)(\\n|$)"
+      ],
+      "datasourceTemplate": "github-tags",
+      "packageNameTemplate": "tuist/tuist",
+      "depNameTemplate": "tuist",
+      "versioningTemplate": "semver"
+    }
+  ]
+}
